@@ -1,15 +1,15 @@
 import logging
 import os
-from typing import Optional, Tuple, Literal
+from typing import Literal, Optional, Tuple
 
 import paramiko
-
 from fastapi import HTTPException
 from mcp.server.fastmcp import FastMCP
-from pydantic import BaseModel, Field
-
+from mcp.types import TextContent
 from mcp_ssh_exec.ssh_client import SSHClient
 from mcp_ssh_exec.utils import validate_command
+from pydantic import BaseModel, Field
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -187,7 +187,15 @@ async def ssh_exec(
         exit_code, stdout, stderr = await client.execute_command(full_command)
 
         logger.info("Executed command: %s, exit code: %s", command, exit_code)
-        return exit_code, stdout, stderr
+        # return the TextContent for all outputs
+        return TextContent(
+            type="text",
+            text=json.dumps({
+                "exit_code": exit_code,
+                "stdout": stdout,
+                "stderr": stderr
+            })
+        )
     except Exception as e:
         logger.error(
             "Failed to execute command: %s, error: %s", full_command, str(e))
