@@ -1,10 +1,7 @@
 from dotenv import load_dotenv
 import argparse
-import asyncio
 import logging
 import os
-import sys
-from typing import List, Optional
 
 from .server import mcp
 
@@ -23,128 +20,116 @@ load_dotenv(dotenv_path=dotenv_path)
 logger.info(f"Loaded environment variables from {dotenv_path}")
 
 
-def main():
-    """Entry point for the SSH execution MCP server"""
-    import uvicorn
+def parse_arguments():
+    """Parse command line arguments for the SSH execution MCP server.
 
-    # Parse command line arguments
+    Returns:
+        argparse.Namespace: Parsed command line arguments
+    """
     parser = argparse.ArgumentParser(description="SSH execution MCP server")
 
-    # Server configuration
-    parser.add_argument(
-        "--host", "-H",
-        type=str,
-        default="127.0.0.1",
-        help="Host to bind the server to (default: 127.0.0.1)"
-    )
-    parser.add_argument(
-        "--port", "-P",
-        type=int,
-        default=8000,
-        help="Port to bind the server to (default: 8000)"
-    )
-    parser.add_argument(
-        "--reload", "-r",
-        action="store_true",
-        help="Enable auto-reload for development"
-    )
-
     # SSH connection configuration
-    parser.add_argument(
+    ssh_group = parser.add_argument_group("SSH Connection Configuration")
+    ssh_group.add_argument(
         "--ssh-host", "-sh",
         type=str,
         help="SSH host to connect to (overrides SSH_HOST environment variable)"
     )
-    parser.add_argument(
+    ssh_group.add_argument(
         "--ssh-port", "-sp",
         type=int,
         help="SSH port to connect to (overrides SSH_PORT environment variable)"
     )
-    parser.add_argument(
+    ssh_group.add_argument(
         "--ssh-username", "-su",
         type=str,
         help="SSH username (overrides SSH_USERNAME environment variable)"
     )
 
     # Security configuration arguments
-    parser.add_argument(
+    security_group = parser.add_argument_group("Security Configuration")
+    security_group.add_argument(
         "--allowed-commands", "-ac",
         type=str,
         help="Comma-separated list of commands that are allowed to be executed"
     )
-    parser.add_argument(
+    security_group.add_argument(
         "--allowed-paths", "-ap",
         type=str,
         help="Comma-separated list of paths that are allowed for command execution"
     )
-    parser.add_argument(
+    security_group.add_argument(
         "--commands-blacklist", "-cb",
         type=str,
         default="rm,mv,dd,mkfs,fdisk,format",
         help="Comma-separated list of commands that are not allowed (default: rm,mv,dd,mkfs,fdisk,format)"
     )
-    parser.add_argument(
+    security_group.add_argument(
         "--arguments-blacklist", "-ab",
         type=str,
         default="-rf,-fr,--force",
-        help="Comma-separated list of arguments that are not allowed (default: -rf,-fr,--force)"
+        help="Comma-separated list of arguments that are not allowed "
+             "(default: -rf,-fr,--force)"
     )
 
-    args = parser.parse_args()
+    return parser.parse_args()
 
-    # Set environment variables from command-line arguments if provided
-    if args.ssh_host:
-        os.environ["SSH_HOST"] = args.ssh_host
 
-    if args.ssh_port:
-        os.environ["SSH_PORT"] = str(args.ssh_port)
+def update_environment_from_args(args):
+    """Update environment variables from command-line arguments.
 
-    if args.ssh_username:
-        os.environ["SSH_USERNAME"] = args.ssh_username
+    Args:
+        args (argparse.Namespace): Parsed command line arguments
+    """
+    env_mappings = {
+        "ssh_host": "SSH_HOST",
+        "ssh_port": "SSH_PORT",
+        "ssh_username": "SSH_USERNAME",
+        "allowed_commands": "SSH_ALLOWED_COMMANDS",
+        "allowed_paths": "SSH_ALLOWED_PATHS",
+        "commands_blacklist": "SSH_COMMANDS_BLACKLIST",
+        "arguments_blacklist": "SSH_ARGUMENTS_BLACKLIST",
+    }
 
-    if args.allowed_commands:
-        os.environ["SSH_ALLOWED_COMMANDS"] = args.allowed_commands
+    for arg_name, env_var in env_mappings.items():
+        arg_value = getattr(args, arg_name, None)
+        if arg_value is not None:
+            os.environ[env_var] = str(arg_value)
 
-    if args.allowed_paths:
-        os.environ["SSH_ALLOWED_PATHS"] = args.allowed_paths
 
-    if args.commands_blacklist:
-        os.environ["SSH_COMMANDS_BLACKLIST"] = args.commands_blacklist
-
-    if args.arguments_blacklist:
-        os.environ["SSH_ARGUMENTS_BLACKLIST"] = args.arguments_blacklist
-
-    # Log server startup
-    logger.info("Starting SSH execution MCP server on {host}:{port}",
-                host=args.host, port=args.port)
-
+def log_configuration():
+    """Log the current server configuration."""
     # Use get() to safely access environment variables that might not be set
-    ssh_host = os.environ.get('SSH_HOST', 'Not set')
-    ssh_port = os.environ.get('SSH_PORT', 'Not set')
-    ssh_username = os.environ.get('SSH_USERNAME', 'Not set')
-    allowed_commands = os.environ.get('SSH_ALLOWED_COMMANDS', '')
-    allowed_paths = os.environ.get('SSH_ALLOWED_PATHS', '')
-    commands_blacklist = os.environ.get('SSH_COMMANDS_BLACKLIST', '')
-    arguments_blacklist = os.environ.get('SSH_ARGUMENTS_BLACKLIST', '')
+    config_vars = {
+        "SSH host": os.environ.get('SSH_HOST', 'Not set'),
+        "SSH port": os.environ.get('SSH_PORT', 'Not set'),
+        "SSH username": os.environ.get('SSH_USERNAME', 'Not set'),
+        "Allowed commands": os.environ.get('SSH_ALLOWED_COMMANDS', ''),
+        "Allowed paths": os.environ.get('SSH_ALLOWED_PATHS', ''),
+        "Commands blacklist": os.environ.get('SSH_COMMANDS_BLACKLIST', ''),
+        "Arguments blacklist": os.environ.get('SSH_ARGUMENTS_BLACKLIST', ''),
+    }
 
-    logger.info("SSH connection details: {ssh_host}:{ssh_port}",
-                ssh_host=ssh_host, ssh_port=ssh_port)
-    logger.info("SSH username: {ssh_username}", ssh_username=ssh_username)
-    logger.info("Allowed commands: {allowed_commands}",
-                allowed_commands=allowed_commands)
-    logger.info("Allowed paths: {allowed_paths}", allowed_paths=allowed_paths)
-    logger.info("Commands blacklist: {commands_blacklist}",
-                commands_blacklist=commands_blacklist)
-    logger.info("Arguments blacklist: {arguments_blacklist}",
-                arguments_blacklist=arguments_blacklist)
+    logger.info("Starting SSH execution MCP server")
 
-    # Start the FastMCP server using Uvicorn
-    uvicorn.run(
-        "mcp_ssh_exec.ssh_exec:mcp",
-        host=args.host,
-        port=args.port,
-        reload=args.reload
-    )
+    for name, value in config_vars.items():
+        logger.info(f"{name}: {value}")
+
+
+def main():
+    """Entry point for the SSH execution MCP server."""
+    # Parse command line arguments
+    args = parse_arguments()
+
+    # Update environment variables from command-line arguments
+    update_environment_from_args(args)
+
+    # Log server configuration
+    log_configuration()
+
+    # Start the MCP server using the centralized function from server.py
+    from .server import main as server_main
+    server_main(transport="stdio")
 
 
 if __name__ == "__main__":

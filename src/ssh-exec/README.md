@@ -44,14 +44,6 @@ Optional environment variables for security configuration:
 - `SSH_ARGUMENTS_BLACKLIST`: Comma-separated list of arguments that are not allowed (default: -rf,-fr,--force)
 
 ### Command-Line Arguments
-
-The server configuration is split into two distinct parts:
-
-#### Server Configuration
-- `--host`, `-H`: Host to bind the server to (default: 127.0.0.1)
-- `--port`, `-P`: Port to bind the server to (default: 8000)
-- `--reload`, `-r`: Enable auto-reload for development
-
 #### SSH Connection Configuration
 - `--ssh-host`, `-sh`: SSH host to connect to (overrides SSH_HOST environment variable)
 - `--ssh-port`, `-sp`: SSH port to connect to (overrides SSH_PORT environment variable)

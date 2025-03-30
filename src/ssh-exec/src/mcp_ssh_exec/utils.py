@@ -63,9 +63,18 @@ def validate_command(
         for path_arg in potential_paths:
             path_allowed = False
 
+            # Skip empty path arguments
+            if not path_arg.strip():
+                continue
+
             # Check if the path is within any of the allowed paths
             for allowed_path in allowed_paths:
-                if path_arg.startswith(allowed_path) or os.path.abspath(path_arg).startswith(allowed_path):
+                # Normalize paths for comparison
+                norm_path_arg = os.path.normpath(path_arg)
+                norm_allowed_path = os.path.normpath(allowed_path)
+
+                if (norm_path_arg.startswith(norm_allowed_path) or
+                        os.path.abspath(norm_path_arg).startswith(norm_allowed_path)):
                     path_allowed = True
                     break
 

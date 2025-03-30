@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Literal
 
 import paramiko
 
@@ -28,8 +28,8 @@ ARGUMENTS_BLACKLIST = []
 ssh_client = None
 
 
-def load_configuration():
-    """Load configuration from environment variables"""
+def load_env():
+    """Load environment variables"""
     global SSH_HOST, SSH_PORT, SSH_USERNAME
     global SSH_PRIVATE_KEY, SSH_PASSWORD
     global ALLOWED_COMMANDS, ALLOWED_PATHS
@@ -177,9 +177,9 @@ async def ssh_exec(
     client = get_ssh_client()
 
     if not client:
-        logger.error("Failed to create SSH client")
-        raise HTTPException(
-            status_code=500, detail="Failed to create SSH client. Check server logs for details.")
+        error_msg = "Failed to create SSH client. Check server logs for details."
+        logger.error(error_msg)
+        raise HTTPException(status_code=500, detail=error_msg)
 
     try:
         # Execute command
@@ -201,7 +201,7 @@ async def ssh_exec(
 # Load configuration at module initialization time
 # This is safe because we're using global variables that are initialized with defaults
 try:
-    load_configuration()
+    load_env()
     logger.info("Configuration loaded successfully")
 
     # Test SSH configuration
@@ -217,7 +217,17 @@ except Exception as e:
     logger.error("The server will start, but SSH commands may fail")
 
 
-if __name__ == "__main__":
+def main(transport: Literal["stdio", "sse"] = "stdio") -> None:
+    """Initialize and run the SSH execution MCP server with stdio transport.
+
+    This function serves as the entry point when the module is imported and used
+    by other modules. It starts the FastMCP server using stdio transport, which
+    is suitable for integration with MCP clients.
+    """
     # Initialize and run the server
     logger.info("starting ssh exec server...")
-    mcp.run(transport="stdio")
+    mcp.run(transport=transport)
+
+
+if __name__ == "__main__":
+    main()

@@ -129,3 +129,10 @@ class SSHClient:
                 str(e)
             )
             raise
+        except Exception as e:
+            logger.error(
+                "Unexpected error executing command: %s, error: %s",
+                command,
+                str(e)
+            )
+            raise
