@@ -3,7 +3,6 @@ import argparse
 import logging
 import os
 
-from .server import mcp
 
 # Configure logging
 logging.basicConfig(

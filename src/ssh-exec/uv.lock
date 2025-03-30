@@ -384,6 +384,7 @@ dependencies = [
     { name = "paramiko" },
     { name = "pydantic" },
     { name = "python-dotenv" },
+    { name = "ruff" },
     { name = "uvicorn" },
 ]
 
@@ -405,6 +406,7 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.5.0" },
     { name = "pyright", marker = "extra == 'dev'", specifier = ">=1.1.389" },
     { name = "python-dotenv", specifier = ">=1.0.0" },
+    { name = "ruff", specifier = ">=0.11.2" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.7.3" },
     { name = "uvicorn", specifier = ">=0.23.0" },
 ]
