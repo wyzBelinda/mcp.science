@@ -124,15 +124,7 @@ def get_ssh_client() -> Optional[SSHClient]:
 
 
 # Add the SSH exec tool
-@mcp.tool(
-    name="execute-command",
-    description="""
-    Executes a command on the remote system over SSH.
-    Returns the result as text field of TextContent in JSON format,
-    including the exit code, standard output (stdout),
-    and standard error (stderr).
-    """
-)
+@mcp.tool()
 async def ssh_exec(
     command: Annotated[str, Field(
         description="Command for SSH server to execute")],
