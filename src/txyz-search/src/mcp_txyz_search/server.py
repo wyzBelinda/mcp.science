@@ -1,8 +1,10 @@
 
+import logging
 import os
 from typing import Any, Callable, List, Optional, cast
 
 import httpx
+from dotenv import load_dotenv
 from mcp.server.lowlevel import Server as McpServer
 from mcp.server.stdio import stdio_server
 from mcp.shared.exceptions import McpError
@@ -12,7 +14,13 @@ from pydantic import BaseModel, ValidationError
 from .tools import (SearchQuery, search_scholar_tool, search_smart_tool,
                     search_web_tool)
 
-TXYZ_API_BASE_URL = "https://api.txyz.ai/v1"
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+load_dotenv()
+
 
 def _max_result_restriction(max_results: int) -> int:
     return max(1, min(20, max_results))
@@ -31,7 +39,7 @@ class TXYZAPIClient:
 
     def __init__(self):
         self.api_key = os.getenv("TXYZ_API_KEY", default="")
-        self.base_url = TXYZ_API_BASE_URL
+        self.base_url = os.getenv("TXYZ_API_BASE_URL", default="https://api.txyz.ai/v1")
         self._validate_api_key()
 
     def _validate_api_key(self):
@@ -101,7 +109,7 @@ def _handle_smart_result(result: TXYZSearchResult, idx: int) -> TextContent:
     return TextContent(type="text", text=result_text)
 
 
-# 通用搜索函数
+# General Search Function
 async def _search(
         router: str,
         query: str,
@@ -169,11 +177,11 @@ async def serve():
                 message=f"Invalid arguments for {tool_name}: {str(e)}"
             ))
         match tool_name:
-            case "txyz_search_scholar":
+            case search_scholar_tool.name:
                 return await search_scholar(args.query, args.max_results)
-            case "txyz_search_web":
+            case search_web_tool.name:
                 return await search_web(args.query, args.max_results)
-            case "txyz_search_smart":
+            case search_smart_tool.name:
                 return await search_smart(args.query, args.max_results)
             case _:
                 raise McpError(ErrorData(
@@ -183,9 +191,10 @@ async def serve():
 
 
     async with stdio_server() as (read_stream, write_stream):
+        logger.info("Starting TXYZ Search Server...")
         await server.run(
             read_stream,
             write_stream,
             initialization_options=server.create_initialization_options(),
-            raise_exceptions=True,
+            raise_exceptions=False
         )

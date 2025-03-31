@@ -3,7 +3,7 @@ name = "mcp-txyz-search"
 version = "0.1.0"
 description = "TXYZ Search MCP Server"
 readme = "README.md"
-requires-python = ">=3.12,<3.13"
+requires-python = ">=3.10,<3.13"
 dependencies = [
     "httpx>=0.28.1",
     "mcp[cli]>=1.5.0",
