@@ -1,6 +1,8 @@
 import logging
 import os
 from typing import Literal, Optional, Tuple
+from functools import lru_cache
+from typing import Annotated
 
 import paramiko
 from fastapi import HTTPException
@@ -23,9 +25,6 @@ ALLOWED_COMMANDS = []
 ALLOWED_PATHS = []
 COMMANDS_BLACKLIST = []
 ARGUMENTS_BLACKLIST = []
-
-# SSH client instance
-ssh_client = None
 
 
 def load_env():
@@ -74,6 +73,8 @@ class ExecuteCommand(BaseModel):
     command: str = Field(description="Command to execute on the remote system")
     arguments: Optional[str] = Field(
         default=None, description="Arguments to pass to the command")
+    timeout: Optional[int] = Field(
+        default=None, description="Timeout in seconds for command execution")
 
 
 # Create an MCP server
@@ -96,49 +97,56 @@ def validate_ssh_config() -> None:
 
 
 # Get or create SSH client
+@lru_cache
 def get_ssh_client() -> Optional[SSHClient]:
     """Get or create SSH client
 
     Returns:
         SSH client instance or None if configuration is invalid
     """
-    global ssh_client
-
-    # Check if we have the required configuration
-    if not SSH_HOST or not SSH_USERNAME:
-        logger.error("Missing required SSH configuration")
-        return None
 
     # Create SSH client if it doesn't exist
-    if not ssh_client:
-        try:
-            ssh_client = SSHClient(
-                host=SSH_HOST,
-                port=SSH_PORT,
-                username=SSH_USERNAME,
-                private_key=SSH_PRIVATE_KEY,
-                password=SSH_PASSWORD
-            )
-            logger.info(
-                "Created SSH client for %s@%s:%s", SSH_USERNAME, SSH_HOST, SSH_PORT)
-        except paramiko.SSHException as e:
-            logger.error("Failed to create SSH client: %s", str(e))
-            return None
-
-    return ssh_client
+    try:
+        ssh_client = SSHClient(
+            host=SSH_HOST,
+            port=SSH_PORT,
+            username=SSH_USERNAME,
+            private_key=SSH_PRIVATE_KEY,
+            password=SSH_PASSWORD
+        )
+        logger.info(
+            "Created SSH client for %s@%s:%s",
+            SSH_USERNAME, SSH_HOST, SSH_PORT)
+        return ssh_client
+    except paramiko.SSHException as e:
+        logger.error("Failed to create SSH client: %s", str(e))
+        return None
 
 
 # Add the SSH exec tool
-@mcp.tool()
+@mcp.tool(
+    name="execute-command",
+    description="""
+    Executes a command on the remote system over SSH.
+    Returns the result as text field of TextContent in JSON format,
+    including the exit code, standard output (stdout),
+    and standard error (stderr).
+    """
+)
 async def ssh_exec(
-    command: str,
-    arguments: Optional[str] = None
+    command: Annotated[str, Field(
+        description="Command for SSH server to execute")],
+    arguments: Annotated[Optional[str], Field(
+        description="Arguments to pass to the command")] = None,
+    timeout: Annotated[Optional[int], Field(
+        description="Timeout in seconds for command execution")] = None
 ) -> Tuple[int, str, str]:
     """Execute a command on the remote system
 
     Args:
         command: Command to execute
         arguments: Arguments to pass to the command
+        timeout: Optional timeout in seconds for command execution
 
     Returns:
         Tuple containing (exit_code, stdout, stderr)
@@ -152,7 +160,9 @@ async def ssh_exec(
     except ValueError as e:
         logger.error("SSH configuration error: %s", str(e))
         raise HTTPException(
-            status_code=500, detail=f"SSH configuration error: {str(e)}")
+            status_code=500,
+            detail=f'SSH configuration error: {str(e)}'
+        ) from e
 
     # Build the full command
     full_command = command
@@ -160,18 +170,13 @@ async def ssh_exec(
         full_command = f"{command} {arguments}"
 
     # Validate command against security constraints
-    validation_error = validate_command(
+    validate_command(
         full_command,
         ALLOWED_COMMANDS,
         ALLOWED_PATHS,
         COMMANDS_BLACKLIST,
         ARGUMENTS_BLACKLIST
     )
-
-    if validation_error:
-        logger.error("Command validation failed: %s", validation_error)
-        error_msg = f"Command validation failed: {validation_error}"
-        raise HTTPException(status_code=400, detail=error_msg)
 
     # Get SSH client
     client = get_ssh_client()
@@ -184,7 +189,8 @@ async def ssh_exec(
     try:
         # Execute command
         await client.connect()
-        exit_code, stdout, stderr = await client.execute_command(full_command)
+        exit_code, stdout, stderr = await client.execute_command(
+            command=full_command, timeout=timeout)
 
         logger.info("Executed command: %s, exit code: %s", command, exit_code)
         # return the TextContent for all outputs

@@ -97,11 +97,19 @@ class SSHClient:
                 self.port
             )
 
-    async def execute_command(self, command: str) -> Tuple[int, str, str]:
+    async def execute_command(
+        self,
+        command: str,
+        timeout: Optional[int] = None
+    ) -> Tuple[int, str, str]:
         """Execute a command on the remote system
 
         Args:
             command: Command to execute
+            timeout: Optional timeout in seconds for executing the command,
+                the number of seconds to wait for a pending read or write
+                operation before raising a socket.timeout error. Set to None
+                to disable the timeout.
 
         Returns:
             Tuple of (exit_code, stdout, stderr)
@@ -111,15 +119,16 @@ class SSHClient:
 
         try:
             # Ignore stdin as it's not used
-            _, stdout, stderr = self.client.exec_command(command)
+            _, stdout, stderr = self.client.exec_command(
+                command=command, timeout=timeout
+            )
             exit_code = stdout.channel.recv_exit_status()
             stdout_str = stdout.read().decode("utf-8")
             stderr_str = stderr.read().decode("utf-8")
 
             logger.info(
                 "Executed command: %s, exit code: %s",
-                command,
-                exit_code
+                command, exit_code
             )
             return exit_code, stdout_str, stderr_str
         except paramiko.SSHException as e:

@@ -1,5 +1,7 @@
 import os
-from typing import List, Optional
+import logging
+from typing import List
+from fastapi import HTTPException
 
 
 def validate_command(
@@ -8,7 +10,7 @@ def validate_command(
     allowed_paths: List[str],
     commands_blacklist: List[str],
     arguments_blacklist: List[str]
-) -> Optional[str]:
+) -> None:
     """Validate if a command is allowed to be executed
 
     Args:
@@ -18,15 +20,18 @@ def validate_command(
         commands_blacklist: List of blacklisted commands
         arguments_blacklist: List of blacklisted arguments
 
-    Returns:
-        None if the command is valid, otherwise an error message
+    Raises:
+        HTTPException: If the command validation fails
     """
     # Strip the command of any leading/trailing whitespace
     command = command.strip()
 
     # Check if the command is empty
     if not command:
-        return "Command cannot be empty"
+        error_msg = "Command cannot be empty"
+        logging.error("Command validation failed: %s", error_msg)
+        raise HTTPException(
+            status_code=400, detail=f"Command validation failed: {error_msg}")
 
     # Split the command into parts (command and arguments)
     parts = command.split()
@@ -35,13 +40,19 @@ def validate_command(
     # Check if the command is in the blacklist
     for blacklisted_cmd in commands_blacklist:
         if base_command == blacklisted_cmd or base_command.endswith(f"/{blacklisted_cmd}"):
-            return f"Command '{base_command}' is blacklisted"
+            error_msg = f"Command '{base_command}' is blacklisted"
+            logging.error("Command validation failed: %s", error_msg)
+            raise HTTPException(
+                status_code=400, detail=f"Command validation failed: {error_msg}")
 
     # Check for blacklisted arguments
     for arg in parts[1:]:
         for blacklisted_arg in arguments_blacklist:
             if arg == blacklisted_arg:
-                return f"Argument '{arg}' is blacklisted"
+                error_msg = f"Argument '{arg}' is blacklisted"
+                logging.error("Command validation failed: %s", error_msg)
+                raise HTTPException(
+                    status_code=400, detail=f"Command validation failed: {error_msg}")
 
     # If allowed_commands is provided, check if the command is in the list
     if allowed_commands:
@@ -52,7 +63,10 @@ def validate_command(
                 break
 
         if not is_allowed:
-            return f"Command '{command}' is not in the allowed commands list"
+            error_msg = f"Command '{command}' is not in the allowed commands list"
+            logging.error("Command validation failed: %s", error_msg)
+            raise HTTPException(
+                status_code=400, detail=f"Command validation failed: {error_msg}")
 
     # If allowed_paths is provided, check if the command operates on allowed paths
     if allowed_paths and any(path_arg for path_arg in parts[1:] if not path_arg.startswith("-")):
@@ -78,6 +92,10 @@ def validate_command(
                     break
 
             if not path_allowed:
-                return f"Path '{path_arg}' is not in the allowed paths list"
+                error_msg = f"Path '{path_arg}' is not in the allowed paths list"
+                logging.error("Command validation failed: %s", error_msg)
+                raise HTTPException(
+                    status_code=400, detail=f"Command validation failed: {error_msg}")
 
-    return None
+    # If we get here, the command is valid
+    return
