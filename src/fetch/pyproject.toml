@@ -3,10 +3,9 @@ name = "mcp-web-fetch"
 version = "0.1.0"
 description = "Fetch data from ANY website"
 readme = "README.md"
-requires-python = ">=3.12, <3.13"
+requires-python = ">=3.10, <3.13"
 dependencies = [
     "httpx>=0.28.1",
-    "ipython>=9.0.2",
     "markdownify>=1.1.0",
     "mcp[cli]>=1.5.0",
     "pymupdf>=1.25.4",
