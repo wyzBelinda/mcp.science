@@ -16,7 +16,7 @@ class PythonCodeExecutionArgs(BaseModel):
     code: str
 
 # General Search Function
-async def python_code_execution_tool(code: str) -> TextContent:
+async def python_code_execution(code: str) -> TextContent:
     """Execute the generated python code in a sandboxed environment.
 
     This tool allows you to run Python code with certain restrictions for security.
@@ -111,6 +111,11 @@ async def python_code_execution_tool(code: str) -> TextContent:
         type="text",
     )
 
+python_code_execution_tool = Tool(
+    name="python_code_execution",
+    description=python_code_execution.__doc__,
+    inputSchema=PythonCodeExecutionArgs.model_json_schema()
+)
 
 async def serve():
     server = McpServer(name="mcp-python_code_execution")
@@ -130,7 +135,7 @@ async def serve():
             ))
         match tool_name:
             case python_code_execution_tool.name:
-                return await python_code_execution_tool(args.code)
+                return await python_code_execution(args.code)
             case _:
                 raise McpError(ErrorData(
                     code=INTERNAL_ERROR,
