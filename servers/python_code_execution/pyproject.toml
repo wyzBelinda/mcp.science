@@ -1,5 +1,5 @@
 [project]
-name = "python_code_execution"
+name = "mcp_python_code_execution"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
