@@ -113,7 +113,7 @@ async def python_code_execution_tool(code: str) -> TextContent:
 
 
 async def serve():
-    server = McpServer(name="mcp-python-code-execution")
+    server = McpServer(name="mcp-python_code_execution")
 
     @server.list_tools()
     async def list_tools() -> list[Tool]:
