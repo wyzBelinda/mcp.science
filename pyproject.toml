@@ -1,10 +1,9 @@
 [project]
 name = "mcp-servers"
 version = "0.1.0"
-description = "Add your description here"
+description = "Open Source MCP Servers for Scientific Research"
 readme = "README.md"
-authors = [{ name = "todd zhang", email = "toddzhang@pathintegral.xyz" }]
-requires-python = ">=3.13"
+requires-python = ">=3.12"
 dependencies = []
 
 [project.scripts]
