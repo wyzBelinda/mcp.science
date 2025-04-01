@@ -81,8 +81,9 @@ async def python_code_execution(code: str) -> list[TextContent]:
     try:
         # Construct the command with proper escaping
         cmd = [
-            "python",
-            "safe_execute.py",
+            "uv",
+            "run",
+            "safe-execute",
             "--code", cleaned_code
         ]
 
