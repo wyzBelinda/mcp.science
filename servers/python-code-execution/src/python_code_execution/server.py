@@ -16,7 +16,7 @@ class PythonCodeExecutionArgs(BaseModel):
     code: str
 
 # General Search Function
-async def python_code_execution(code: str) -> TextContent:
+async def python_code_execution(code: str) -> list[TextContent]:
     """Execute the generated python code in a sandboxed environment.
 
     This tool allows you to run Python code with certain restrictions for security.
@@ -106,10 +106,10 @@ async def python_code_execution(code: str) -> TextContent:
     except Exception as e:
         result = f"An error occurred while executing the code: {str(e)}"
 
-    return TextContent(
+    return [TextContent(
         text=result,
         type="text",
-    )
+    )]
 
 python_code_execution_tool = Tool(
     name="python_code_execution",
