@@ -7,6 +7,7 @@ members = [
     "mcp-servers",
     "mcp-txyz-search",
     "mcp-web-fetch",
+    "python-code-execution",
 ]
 
 [[package]]
@@ -404,6 +405,17 @@ wheels = [
 ]
 
 [[package]]
+name = "python-code-execution"
+version = "0.1.0"
+source = { editable = "servers/python-code-execution" }
+dependencies = [
+    { name = "mcp" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "mcp", specifier = ">=1.6.0" }]
+
+[[package]]
 name = "python-dotenv"
 version = "1.1.0"
 source = { registry = "https://pypi.org/simple" }
@@ -606,6 +618,3 @@ sdist = { url = "https://files.pythonhosted.org/packages/0b/02/ae6ceac1baeda5308
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f4/24/2a3e3df732393fed8b3ebf2ec078f05546de641fe1b667ee316ec1dcf3b7/webencodings-0.5.1-py2.py3-none-any.whl", hash = "sha256:a0af1213f3c2226497a97e2b3aa01a7e4bee4f403f95be16fc9acd2947514a78", size = 11774 },
 ]
-
-[package.metadata]
-requires-dist = [{ name = "mcp", specifier = ">=1.6.0" }]
