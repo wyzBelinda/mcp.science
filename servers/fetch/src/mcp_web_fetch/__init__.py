@@ -1,7 +1,6 @@
 import argparse
-import asyncio
 
-from .fetch import serve
+from mcp_web_fetch.fetch import serve
 
 DEFAULT_USER_AGENT = "ModelContextProtocol/1.0 (User-Specified; +https://github.com/modelcontextprotocol/servers)"
 
@@ -16,7 +15,7 @@ def main():
     )
     args = parser.parse_args()
 
-    asyncio.run(serve(args.user_agent))
+    serve(args.user_agent)
 
 
 if __name__ == "__main__":
