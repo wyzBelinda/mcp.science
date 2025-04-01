@@ -3,9 +3,7 @@ name = "mcp-servers"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-authors = [
-    { name = "todd zhang", email = "toddzhang@pathintegral.xyz" }
-]
+authors = [{ name = "todd zhang", email = "toddzhang@pathintegral.xyz" }]
 requires-python = ">=3.13"
 dependencies = []
 
@@ -17,4 +15,8 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.uv.workspace]
-members = ["servers/txyz-search", "servers/fetch"]
+members = [
+    "servers/txyz-search",
+    "servers/fetch",
+    "servers/python_code_execution",
+]
