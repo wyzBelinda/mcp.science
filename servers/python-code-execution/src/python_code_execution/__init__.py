@@ -1,2 +1,8 @@
+from .server import serve
+import asyncio
+
 def main() -> None:
-    print("Hello from python-code-execution!")
+    asyncio.run(serve())
+
+if __name__ == "__main__":
+    main()
