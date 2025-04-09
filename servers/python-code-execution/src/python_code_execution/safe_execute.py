@@ -3,6 +3,7 @@ import json
 import base64
 from .local_python_executor import evaluate_python_code
 from .schemas import BASE_BUILTIN_MODULES, DEFAULT_MAX_LEN_OUTPUT
+from mcp.types import ImageContent, EmbeddedResource
 
 
 def main():
@@ -37,23 +38,35 @@ def main():
             max_cpu_time_sec=args.max_cpu_time_sec
         )
 
-        # If there are images, format the output as JSON with text and images
+        # If there are response objects (images or embedded resources), format the output as JSON
         if images:
             output = {
                 "text": result,
-                "images": [
-                    {
-                        "type": "image",
-                        "data": img.data,
-                        "mimeType": img.mimeType
-                    } for img in images
-                ]
+                "content": []
             }
+            for obj in images:
+                if isinstance(obj, ImageContent):
+                    output["content"].append({
+                        "type": "image",
+                        "data": obj.data,
+                        "mimeType": obj.mimeType
+                    })
+                elif isinstance(obj, EmbeddedResource):
+                    output["content"].append({
+                        "type": "resource",
+                        "resource": {
+                            "uri": str(obj.resource.uri),
+                            "text": obj.resource.text,
+                            "mimeType": obj.resource.mimeType
+                        },
+                        "extra_type": obj.extra_type
+                    })
+
             print(json.dumps(output))
         else:
-            # If no images, just print the text result
+            # If no response objects, just print the text result
             print(result)
-            
+
     except Exception as e:
         resource_error_msg = (
             f"\n⚠️ RESOURCE LIMIT EXCEEDED ⚠️\n"
