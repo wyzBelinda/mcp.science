@@ -22,6 +22,7 @@ _Join us in accelerating scientific discovery with AI and open-source tools!_
 - [Contributing](#contributing)
 - [License](#license)
 - [Acknowledgments](#acknowledgments)
+- [Citation](#citation)
 
 ## About
 
@@ -174,6 +175,25 @@ Please make sure your PR adheres to:
 - Proper documentation updates
 - Test coverage for new features
 
+### Contributor Recognition in Subrepos
+
+If you want to recognize contributors for a specific server/subrepo (e.g. `servers/gpaw-computation/`), you can use the [All Contributors CLI](https://allcontributors.org/docs/en/cli/installation) in that subdirectory.
+
+**Steps:**
+
+1. In your subrepo (e.g. `servers/gpaw-computation/`), create a `.all-contributorsrc` file (see [example](servers/gpaw-computation/.all-contributorsrc)).
+2. Add contributors using the CLI:
+   ```bash
+   npx all-contributors add <github-username> <contribution-type>
+   ```
+3. Generate or update the contributors section in the subrepo's `README.md`:
+   ```bash
+   npx all-contributors generate
+   ```
+4. Commit the changes to the subrepo's `README.md` and `.all-contributorsrc`.
+
+For more details, see the [All Contributors CLI installation guide](https://allcontributors.org/docs/en/cli/installation).
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
@@ -181,3 +201,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Acknowledgments
 
 Thanks to all contributors!
+
+## Citation
+
+For general use, please cite this repository as described in the root [CITATION.cff](./CITATION.cff).
+
+If you use a specific server/subproject, please see the corresponding `CITATION.cff` file in that subproject's folder under `servers/` for the appropriate citation.
