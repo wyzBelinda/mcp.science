@@ -28,5 +28,3 @@ jobs:
           codex_args: --full-auto
           github_token: ${{ secrets.GITHUB_TOKEN }}
           codex_home: ./.github/codex/home
-        env:
-          GEMINI_API_KEY: ${{ secrets.CODEX_GEMINI_API_KEY }}
