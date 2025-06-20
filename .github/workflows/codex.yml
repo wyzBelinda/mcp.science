@@ -1,14 +1,16 @@
 name: Codex
 
 on:
+  workflow_dispatch:
   issues:
-    types: [opened, labeled]
+    types: [labeled]
   pull_request:
     branches: [main]
     types: [labeled]
 
 jobs:
   codex:
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.event.label.name, 'codex-')
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -21,10 +23,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Generate GitHub App Token
+        id: generate_token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.CODEX_APP_ID }}
+          private-key: ${{ secrets.CODEX_PRIVATE_KEY }}
+
       - name: Run Codex
         uses: openai/codex/.github/actions/codex@main
         with:
           openai_api_key: ${{ secrets.CODEX_OPENAI_API_KEY }}
           codex_args: --full-auto
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ steps.generate_token.outputs.token }}
           codex_home: ./.github/codex/home
