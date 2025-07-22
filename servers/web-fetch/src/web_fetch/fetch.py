@@ -39,7 +39,7 @@ async def fetch(url: str, jina_api_key: str) -> List[TextContent]:
     return llm_results
 
 
-mcp = FastMCP("mcp-web-fetch")
+mcp = FastMCP("mcp-web-fetch", transport="http")
 
 
 @mcp.tool(
